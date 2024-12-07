@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>宋檀家居全屋定制在线报价系统</title>
+    <!-- 引入xlsx库 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 添加视口元标签 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* 通用样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding-bottom: 0; /* 去除底部填充，防止影响布局 */
+            background-color: #ffffff;
+            color: #000000;
+            line-height: 1.6;
+            font-size: 16px;
+        }
+        a {
+            color: #1a0dab;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        /* 标头 */
+        #header {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: center;
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        #header h1 {
+            font-size: 1.5em;
+            margin: 5px 0;
+        }
+        #header p {
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        /* 新增的提示信息 */
+        .mobile-tip {
+            background-color: red;
+            color: yellow;
+            padding: 5px;
+            font-size: 1em;
+        }
+        /* 内容区域 */
+        #content {
+            padding: 20px;
+            padding-top: 160px; /* 确保内容不被顶部遮挡 */
+            padding-bottom: 100px; /* 确保内容不被底部遮挡 */
+            max-width: 1200px;
+            margin: auto;
+        }
+        select, input, button {
+            font-size: 1em;
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            max-width: 100%; /* 防止超出容器宽度 */
+            box-sizing: border-box;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 10px; /* 为按钮增加下边距 */
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        /* 产品详情 */
+        #productDetails {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+        }
+        /* 表格 */
+        table {
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #ffffff;
+            overflow-x: auto; /* 允许在小屏幕上横向滚动 */
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border: 1px solid #dee2e6;
+            font-size: 1em;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        /* 总价固定显示 */
+        #totalPriceFixed {
+            position: fixed;
+            bottom: 0; /* 固定在页面底部 */
+            left: 0;
+            width: 100%;
+            background-color: #ffffff;
+            padding: 10px 0; /* 上下内边距 */
+            text-align: center;
+            border-top: 1px solid #e0e0e0;
+            box-sizing: border-box;
+            z-index: 1000;
+        }
+        /* 登录界面 */
+        #loginScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #loginScreen div {
+            max-width: 400px;
+            width: 100%;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            text-align: center;
+        }
+        /* 响应式设计 */
+        @media screen and (max-width: 600px) {
+            body {
+                font-size: 14px;
+            }
+            #header h1 {
+                font-size: 1.2em;
+            }
+            #header p {
+                font-size: 0.8em;
+            }
+            button, select, input {
+                font-size: 1em;
+            }
+            th, td {
+                padding: 8px;
+                font-size: 0.9em;
+            }
+            /* 调整购物车表格的布局，防止在小屏幕上溢出 */
+            table {
+                table-layout: fixed;
+                word-wrap: break-word;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录界面 -->
+    <div id="loginScreen">
+        <div>
+            <h2>请输入登录密码</h2>
+            <input type="password" id="passwordInput" placeholder="密码">
+            <button onclick="checkPassword()">登录</button>
+            <p id="loginMessage" style="color: red;"></p>
+        </div>
+    </div>
+
+    <div id="mainContent" style="display: none;">
+        <div id="header">
+            <h1>宋檀家居全屋定制在线报价系统</h1>
+            <p>木立信总部全国统一发行 版本20240918V1.0</p>
+            <p class="mobile-tip">安卓手机用户点右上角在浏览器打开链接使用完整功能</p>
+        </div>
+
+        <div id="content">
+            <!-- 客户信息输入 -->
+            <div>
+                <h2>客户信息</h2>
+                <label for="customerName">客户姓名：</label>
+                <input type="text" id="customerName" required>
+                <label for="customerPhone">客户电话：</label>
+                <input type="text" id="customerPhone" required>
+                <label for="customerAddress">客户地址：</label>
+                <input type="text" id="customerAddress" required>
+            </div>
+
+            <!-- 商品选择区域 -->
+            <div>
+                <h2>商品选择</h2>
+                <label for="category">选择类别：</label>
+                <select id="category" onchange="updateSubcategories()" aria-label="选择类别">
+                    <option value="">选择类别</option>
+                </select>
+                <label for="subCategory">选择子类别：</label>
+                <select id="subCategory" onchange="updateMaterials()" aria-label="选择子类别">
+                    <option value="">选择子类别</option>
+                </select>
+                <label for="material">选择材质：</label>
+                <select id="material" onchange="updateProductDetails()" aria-label="选择材质">
+                    <option value="">选择材质</option>
+                </select>
+            </div>
+
+            <!-- 产品详情区域 -->
+            <div id="productDetails" style="display: none;">
+                <h2>已选商品: <span id="selectedItemName"></span></h2>
+                <p>价格: <span id="selectedItemPrice"></span> <span id="selectedItemUnit"></span></p>
+                <div id="inputFields"></div>
+                <p id="calculatedPrice">计算后单价: <span id="calculatedUnitPrice">0</span> 元</p>
+                <p id="depthCoefficientDisplay" style="display: none;">深度系数: <span id="depthCoefficient">1</span></p>
+                <button onclick="addToCart()">加入购物车</button>
+            </div>
+
+            <!-- 购物车区域 -->
+            <h2>购物车</h2>
+            <table id="cartTable">
+                <thead>
+                    <tr>
+                        <th>序号</th>
+                        <th>所属空间</th>
+                        <th>标签</th>
+                        <th>商品</th>
+                        <th>单位</th>
+                        <th>长度</th>
+                        <th>高度</th>
+                        <th>深度</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>总价</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+
+            <!-- 底部按钮 -->
+            <button onclick="downloadExcel()">下载报价单 (Excel)</button>
+            <button onclick="saveScheme()">保存方案</button>
+            <button onclick="loadScheme()">加载方案</button>
+        </div>
+
+        <!-- 固定总价和类别统计显示 -->
+        <div id="totalPriceFixed">
+            总价: <span id="totalPriceFixedValue">0</span> 元，
+            <span id="categoryCounts"></span>
+        </div>
+    </div>
+
+    <!-- 定义数据列表 -->
+    <datalist id="spaceList"></datalist>
+    <datalist id="labelList"></datalist>
+    <datalist id="remarkList"></datalist>
+
+    <!-- JavaScript逻辑 -->
+    <script>
+        // 登录功能
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value;
+            if (password === '7666') {
+                document.getElementById('loginScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                updateCategories();
+                updateSpaceList();
+                updateLabelList();
+                updateRemarkList();
+            } else {
+                document.getElementById('loginMessage').textContent = '请向管理员索取登录密码。';
+            }
+        }
+
+        // 价格数据（JSON数据）
+        const priceData = [
+  {"价格": "3750", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木", "材质": "橡胶木集成材平纹（15㎜实木背板）", "类别": "柜体"},
+  {"价格": "4420", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木", "材质": "碳化杨木直拼（15㎜实木背板）", "类别": "柜体"},
+  {"价格": "3450", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木", "材质": "橡胶木集成材平纹（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "4075", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木", "材质": "碳化杨木直拼（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "4513", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木多层", "材质": "金丝檀木皮（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "5513", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木多层", "材质": "白橡木皮（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "5295", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木多层", "材质": "黑檀木皮（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "5688", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "实木多层", "材质": "北美黑胡桃木皮（9㎜实木背板）", "类别": "柜体"},
+  {"价格": "3675", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-01实木复合", "材质": "金丝檀木", "类别": "门扇"},
+  {"价格": "4275", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-01实木复合", "材质": "白蜡木", "类别": "门扇"},
+  {"价格": "4800", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-01实木复合", "材质": "白橡木", "类别": "门扇"},
+  {"价格": "6025", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-01实木复合", "材质": "黑檀木", "类别": "门扇"},
+  {"价格": "8200", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-01实木复合", "材质": "北美黑胡桃", "类别": "门扇"},
+  {"价格": "2675", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "混油", "类别": "门扇"},
+  {"价格": "3363", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "金丝檀木", "类别": "门扇"},
+  {"价格": "3625", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "白蜡木", "类别": "门扇"},
+  {"价格": "4025", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "白橡木", "类别": "门扇"},
+  {"价格": "4075", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "黑檀木", "类别": "门扇"},
+  {"价格": "4225", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-02实木复合", "材质": "北美黑胡桃", "类别": "门扇"},
+  {"价格": "2675", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "混油", "类别": "门扇"},
+  {"价格": "3363", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "金丝檀木", "类别": "门扇"},
+  {"价格": "3625", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "白蜡木", "类别": "门扇"},
+  {"价格": "4025", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "白橡木", "类别": "门扇"},
+  {"价格": "4075", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "黑檀木", "类别": "门扇"},
+  {"价格": "4225", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-03实木复合", "材质": "北美黑胡桃", "类别": "门扇"},
+  {"价格": "3238", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "混油", "类别": "门扇"},
+  {"价格": "3925", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "金丝檀木", "类别": "门扇"},
+  {"价格": "4200", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "白蜡木", "类别": "门扇"},
+  {"价格": "4725", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "白橡木", "类别": "门扇"},
+  {"价格": "4825", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "黑檀木", "类别": "门扇"},
+  {"价格": "5250", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-04实木复合", "材质": "北美黑胡桃", "类别": "门扇"},
+  {"价格": "3775", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "混油", "类别": "门扇"},
+  {"价格": "4463", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "金丝檀木", "类别": "门扇"},
+  {"价格": "4875", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "白蜡木", "类别": "门扇"},
+  {"价格": "5400", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "白橡木", "类别": "门扇"},
+  {"价格": "5550", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "黑檀木", "类别": "门扇"},
+  {"价格": "6313", "价格类型": "pricePerPiece", "单位": "元/扇", "子类别": "MS-05实木复合", "材质": "北美黑胡桃", "类别": "门扇"},
+  {"价格": "338", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "复合混油", "类别": "门套"},
+  {"价格": "413", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "金丝檀木皮", "类别": "门套"},
+  {"价格": "475", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "白蜡木皮", "类别": "门套"},
+  {"价格": "538", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "白橡木皮", "类别": "门套"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "黑檀木皮", "类别": "门套"},
+  {"价格": "813", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度0-150mm）", "材质": "北美黑胡桃皮", "类别": "门套"},
+  {"价格": "400", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "复合混油", "类别": "门套"},
+  {"价格": "475", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "金丝檀木皮", "类别": "门套"},
+  {"价格": "550", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "白蜡木皮", "类别": "门套"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "白橡木皮", "类别": "门套"},
+  {"价格": "713", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "黑檀木皮", "类别": "门套"},
+  {"价格": "900", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度151mm-200mm）", "材质": "北美黑胡桃皮", "类别": "门套"},
+  {"价格": "450", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "复合混油", "类别": "门套"},
+  {"价格": "550", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "金丝檀木皮", "类别": "门套"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "白蜡木皮", "类别": "门套"},
+  {"价格": "700", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "白橡木皮", "类别": "门套"},
+  {"价格": "788", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "黑檀木皮", "类别": "门套"},
+  {"价格": "988", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度201mm-250mm）", "材质": "北美黑胡桃皮", "类别": "门套"},
+  {"价格": "513", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "复合混油", "类别": "门套"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "金丝檀木皮", "类别": "门套"},
+  {"价格": "700", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "白蜡木皮", "类别": "门套"},
+  {"价格": "788", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "白橡木皮", "类别": "门套"},
+  {"价格": "875", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "黑檀木皮", "类别": "门套"},
+  {"价格": "1075", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度251mm-300mm）", "材质": "北美黑胡桃皮", "类别": "门套"},
+  {"价格": "563", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "复合混油", "类别": "门套"},
+  {"价格": "700", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "金丝檀木皮", "类别": "门套"},
+  {"价格": "775", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "白蜡木皮", "类别": "门套"},
+  {"价格": "863", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "白橡木皮", "类别": "门套"},
+  {"价格": "950", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "黑檀木皮", "类别": "门套"},
+  {"价格": "1163", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "MT-01实木复合门套（墙体厚度301mm-350mm）", "材质": "北美黑胡桃皮", "类别": "门套"},
+  {"价格": "188", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "363", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "413", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "463", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "563", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "750", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度0-150mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "225", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "413", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "463", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "525", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "800", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度151mm-200mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "263", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "463", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "513", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "575", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "675", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "863", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度201mm-250mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "300", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "513", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "563", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "638", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "725", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "925", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度251mm-300mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "338", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "563", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "625", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "688", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "788", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "975", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合双面垭口（墙体厚度301mm-350mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "163", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "263", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "300", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "325", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "375", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "463", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度0-150mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "213", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "313", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "350", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "388", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "425", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "525", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度151mm-200mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "238", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "363", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "400", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "438", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "488", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "588", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度201mm-250mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "275", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "413", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "450", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "500", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "538", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "638", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度251mm-300mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "313", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "复合混油", "类别": "垭口"},
+  {"价格": "463", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "金丝檀木皮", "类别": "垭口"},
+  {"价格": "513", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "白蜡木皮", "类别": "垭口"},
+  {"价格": "550", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "白橡木皮", "类别": "垭口"},
+  {"价格": "600", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "黑檀木皮", "类别": "垭口"},
+  {"价格": "700", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "YK-01实木复合单面垭口（墙体厚度301mm-350mm）", "材质": "北美黑胡桃皮", "类别": "垭口"},
+  {"价格": "1588", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-01实木门芯抽面门板22mm", "材质": "金丝檀木", "类别": "掩门"},
+  {"价格": "1838", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-01实木门芯抽面门板22mm", "材质": "白蜡木", "类别": "掩门"},
+  {"价格": "2150", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-01实木门芯抽面门板22mm", "材质": "白橡木", "类别": "掩门"},
+  {"价格": "2463", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-01实木门芯抽面门板22mm", "材质": "黑檀木", "类别": "掩门"},
+  {"价格": "3188", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-01实木门芯抽面门板22mm", "材质": "北美黑胡桃", "类别": "掩门"},
+  {"价格": "1813", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-02实木门芯抽面门板22mm", "材质": "金丝檀木", "类别": "掩门"},
+  {"价格": "2088", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-02实木门芯抽面门板22mm", "材质": "白蜡木", "类别": "掩门"},
+  {"价格": "2413", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-02实木门芯抽面门板22mm", "材质": "白橡木", "类别": "掩门"},
+  {"价格": "2800", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-02实木门芯抽面门板22mm", "材质": "黑檀木", "类别": "掩门"},
+  {"价格": "3650", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-02实木门芯抽面门板22mm", "材质": "北美黑胡桃", "类别": "掩门"},
+  {"价格": "2275", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-03实木门芯抽面门板22mm", "材质": "金丝檀木", "类别": "掩门"},
+  {"价格": "2613", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-03实木门芯抽面门板22mm", "材质": "白蜡木", "类别": "掩门"},
+  {"价格": "2988", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-03实木门芯抽面门板22mm", "材质": "白橡木", "类别": "掩门"},
+  {"价格": "3475", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-03实木门芯抽面门板22mm", "材质": "黑檀木", "类别": "掩门"},
+  {"价格": "4488", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-03实木门芯抽面门板22mm", "材质": "北美黑胡桃", "类别": "掩门"},
+  {"价格": "1813", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-04实木门芯门板22mm", "材质": "金丝檀木", "类别": "掩门"},
+  {"价格": "2138", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-04实木门芯门板22mm", "材质": "白蜡木", "类别": "掩门"},
+  {"价格": "2463", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-04实木门芯门板22mm", "材质": "白橡木", "类别": "掩门"},
+  {"价格": "3025", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-04实木门芯门板22mm", "材质": "黑檀木", "类别": "掩门"},
+  {"价格": "4113", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-04实木门芯门板22mm", "材质": "北美黑胡桃", "类别": "掩门"},
+  {"价格": "1625", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "混油", "类别": "掩门"},
+  {"价格": "1775", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "金丝檀木", "类别": "掩门"},
+  {"价格": "1963", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "白蜡木", "类别": "掩门"},
+  {"价格": "2213", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "白橡木", "类别": "掩门"},
+  {"价格": "2375", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "黑檀木", "类别": "掩门"},
+  {"价格": "2825", "价格类型": "pricePerSquareMeter", "单位": "元/平方米", "子类别": "YM-05实木门芯实木生态门22mm", "材质": "北美黑胡桃", "类别": "掩门"},
+  {"价格": "100", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-60实木踢脚线", "材质": "金丝檀木", "类别": "踢脚线"},
+  {"价格": "138", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-60实木踢脚线", "材质": "白蜡木", "类别": "踢脚线"},
+  {"价格": "163", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-60实木踢脚线", "材质": "白橡木", "类别": "踢脚线"},
+  {"价格": "213", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-60实木踢脚线", "材质": "黑檀木", "类别": "踢脚线"},
+  {"价格": "313", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-60实木踢脚线", "材质": "北美黑胡桃", "类别": "踢脚线"},
+  {"价格": "88", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-40实木踢脚线", "材质": "金丝檀木", "类别": "踢脚线"},
+  {"价格": "113", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-40实木踢脚线", "材质": "白蜡木", "类别": "踢脚线"},
+  {"价格": "138", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-40实木踢脚线", "材质": "白橡木", "类别": "踢脚线"},
+  {"价格": "175", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-40实木踢脚线", "材质": "黑檀木", "类别": "踢脚线"},
+  {"价格": "263", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "JX01-40实木踢脚线", "材质": "北美黑胡桃", "类别": "踢脚线"},
+  {"价格": "100", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "PX01-45-70棚顶线", "材质": "金丝檀木", "类别": "棚顶线"},
+  {"价格": "138", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "PX01-45-70棚顶线", "材质": "白蜡木", "类别": "棚顶线"},
+  {"价格": "163", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "PX01-45-70棚顶线", "材质": "白橡木", "类别": "棚顶线"},
+  {"价格": "213", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "PX01-45-70棚顶线", "材质": "黑檀木", "类别": "棚顶线"},
+  {"价格": "313", "价格类型": "pricePerMeter", "单位": "元/米", "子类别": "PX01-45-70棚顶线", "材质": "北美黑胡桃", "类别": "棚顶线"},
+  {"价格": "425", "价格类型": "pricePerPiece", "单位": "元/个", "子类别": "PX01-45-70异形角", "材质": "金丝檀木", "类别": "异形角"},
+  {"价格": "525", "价格类型": "pricePerPiece", "单位": "元/个", "子类别": "PX01-45-70异形角", "材质": "白蜡木", "类别": "异形角"},
+  {"价格": "600", "价格类型": "pricePerPiece", "单位": "元/个", "子类别": "PX01-45-70异形角", "材质": "白橡木", "类别": "异形角"},
+  {"价格": "825", "价格类型": "pricePerPiece", "单位": "元/个", "子类别": "PX01-45-70异形角", "材质": "黑檀木", "类别": "异形角"},
+  {"价格": "1225", "价格类型": "pricePerPiece", "单位": "元/个", "子类别": "PX01-45-70异形角", "材质": "北美黑胡桃", "类别": "异形角"}
+];
+
+        let cartItems = [];
+        let previousSpaces = [];
+        let previousLabels = [];
+        let previousRemarks = [];
+
+        // 常用空间提示列表
+        const commonSpaces = ['客厅', '主卧', '次卧', '卧室', '餐厅', '厨房', '衣帽间', '阳台', '书房', '卫生间', '浴室'];
+
+        // 常用备注提示列表
+        const commonRemarks = ['门左开', '门右开', '内开', '外开', '滑轨门', '趟门', '特殊工艺', '特殊配件'];
+
+        // 更新类别选项
+        function updateCategories() {
+            const categories = [...new Set(priceData.map(item => item.类别))];
+            const categorySelect = document.getElementById('category');
+            categorySelect.innerHTML = '<option value="">选择类别</option>';
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.textContent = cat;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        // 更新子类别选项
+        function updateSubcategories() {
+            const category = document.getElementById('category').value;
+            const subCategories = [...new Set(priceData.filter(item => item.类别 === category).map(item => item.子类别))];
+            const subCategorySelect = document.getElementById('subCategory');
+            subCategorySelect.innerHTML = '<option value="">选择子类别</option>';
+            subCategories.forEach(subCat => {
+                const option = document.createElement('option');
+                option.value = subCat;
+                option.textContent = subCat;
+                subCategorySelect.appendChild(option);
+            });
+            document.getElementById('material').innerHTML = '<option value="">选择材质</option>';
+            document.getElementById('productDetails').style.display = 'none';
+        }
+
+        // 更新材质选项
+        function updateMaterials() {
+            const category = document.getElementById('category').value;
+            const subCategory = document.getElementById('subCategory').value;
+            const materials = [...new Set(priceData.filter(item => item.类别 === category && item.子类别 === subCategory).map(item => item.材质))];
+            const materialSelect = document.getElementById('material');
+            materialSelect.innerHTML = '<option value="">选择材质</option>';
+            materials.forEach(mat => {
+                const option = document.createElement('option');
+                option.value = mat;
+                option.textContent = mat;
+                materialSelect.appendChild(option);
+            });
+            document.getElementById('productDetails').style.display = 'none';
+        }
+
+        // 更新产品详情
+        function updateProductDetails() {
+            const category = document.getElementById('category').value;
+            const subCategory = document.getElementById('subCategory').value;
+            const material = document.getElementById('material').value;
+            const selectedItem = priceData.find(item => item.类别 === category && item.子类别 === subCategory && item.材质 === material);
+
+            if (selectedItem) {
+                document.getElementById('productDetails').style.display = 'block';
+                document.getElementById('selectedItemName').textContent = `${category}-${subCategory}-${material}`;
+                document.getElementById('selectedItemPrice').textContent = selectedItem.价格;
+                document.getElementById('selectedItemUnit').textContent = selectedItem.单位;
+
+                const inputFields = document.getElementById('inputFields');
+                inputFields.innerHTML = `
+                    <div class="input-group">
+                        <label for="space">所属空间:</label>
+                        <input type="text" id="space" required list="spaceList" placeholder="输入空间名称">
+                    </div>
+                    <div class="input-group">
+                        <label for="label">标签:</label>
+                        <input type="text" id="label" required list="labelList" placeholder="该项目在空间内位置和具体名称">
+                    </div>`;
+
+                document.getElementById('depthCoefficientDisplay').style.display = 'none';
+
+                if (selectedItem.价格类型 === 'pricePerMeter') {
+                    inputFields.innerHTML += `
+                        <div class="input-group">
+                            <label for="length">长度 (毫米):</label>
+                            <input type="number" id="length" min="0" oninput="calculateUnitPrice()">
+                        </div>`;
+                } else if (selectedItem.价格类型 === 'pricePerSquareMeter') {
+                    inputFields.innerHTML += `
+                        <div class="input-group">
+                            <label for="length">长度 (毫米):</label>
+                            <input type="number" id="length" min="0" oninput="calculateUnitPrice()">
+                        </div>
+                        <div class="input-group">
+                            <label for="height">高度 (毫米):</label>
+                            <input type="number" id="height" min="0" oninput="calculateUnitPrice()">
+                        </div>`;
+                    // 如果类别不是“掩门”，则显示深度和深度系数
+                    if (category !== '掩门') {
+                        inputFields.innerHTML += `
+                            <div class="input-group">
+                                <label for="depth">深度 (毫米):</label>
+                                <input type="number" id="depth" min="0" max="800" oninput="calculateUnitPrice()">
+                            </div>`;
+                        document.getElementById('depthCoefficientDisplay').style.display = 'block';
+                    }
+                }
+
+                inputFields.innerHTML += `
+                    <div class="input-group">
+                        <label for="quantity">数量:</label>
+                        <input type="number" id="quantity" min="1" value="1" oninput="calculateUnitPrice()">
+                    </div>
+                    <div class="input-group">
+                        <label for="remark">备注:</label>
+                        <input type="text" id="remark" list="remarkList" placeholder="需要特别记录的点">
+                    </div>`;
+
+                calculateUnitPrice();
+            }
+        }
+
+        // 计算单价
+        function calculateUnitPrice() {
+            const category = document.getElementById('category').value;
+            const subCategory = document.getElementById('subCategory').value;
+            const material = document.getElementById('material').value;
+            const selectedItem = priceData.find(item => item.类别 === category && item.子类别 === subCategory && item.材质 === material);
+
+            if (selectedItem) {
+                let length = document.getElementById('length') ? parseFloat(document.getElementById('length').value) : 0;
+                let height = document.getElementById('height') ? parseFloat(document.getElementById('height').value) : 0;
+                let depth = document.getElementById('depth') ? parseFloat(document.getElementById('depth').value) : 0;
+                let quantity = document.getElementById('quantity') ? parseInt(document.getElementById('quantity').value) : 1;
+
+                let price = parseFloat(selectedItem.价格);
+                let depthCoefficient = 1;
+
+                if (selectedItem.价格类型 === 'pricePerSquareMeter') {
+                    const area = (length * height) / 1000000; // 将平方毫米转换为平方米
+                    if (category !== '掩门') {
+                        if (depth <= 600) depthCoefficient = 1;
+                        else if (depth <= 650) depthCoefficient = 1.05;
+                        else if (depth <= 700) depthCoefficient = 1.1;
+                        else if (depth <= 750) depthCoefficient = 1.15;
+                        else if (depth <= 800) depthCoefficient = 1.2;
+                        price *= area * depthCoefficient;
+                        document.getElementById('depthCoefficient').textContent = depthCoefficient.toFixed(2);
+                    } else {
+                        price *= area;
+                    }
+                } else if (selectedItem.价格类型 === 'pricePerMeter') {
+                    price *= length / 1000; // 将毫米转换为米
+                }
+
+                const totalPrice = price * quantity;
+                document.getElementById('calculatedUnitPrice').textContent = totalPrice.toFixed(2);
+            }
+        }
+
+        // 更新空间列表
+        function updateSpaceList() {
+            const spaceList = document.getElementById('spaceList');
+            spaceList.innerHTML = '';
+            const allSpaces = [...new Set([...commonSpaces, ...previousSpaces])];
+            allSpaces.forEach(space => {
+                const option = document.createElement('option');
+                option.value = space;
+                spaceList.appendChild(option);
+            });
+        }
+
+        // 更新标签列表
+        function updateLabelList() {
+            const labelList = document.getElementById('labelList');
+            labelList.innerHTML = '';
+            previousLabels.forEach(label => {
+                const option = document.createElement('option');
+                option.value = label;
+                labelList.appendChild(option);
+            });
+        }
+
+        // 更新备注列表
+        function updateRemarkList() {
+            const remarkList = document.getElementById('remarkList');
+            remarkList.innerHTML = '';
+            const allRemarks = [...new Set([...commonRemarks, ...previousRemarks])];
+            allRemarks.forEach(remark => {
+                const option = document.createElement('option');
+                option.value = remark;
+                remarkList.appendChild(option);
+            });
+        }
+
+        // 添加到购物车
+        function addToCart() {
+            const category = document.getElementById('category').value;
+            const subCategory = document.getElementById('subCategory').value;
+            const material = document.getElementById('material').value;
+            const space = document.getElementById('space').value.trim();
+            const label = document.getElementById('label').value.trim();
+            const remark = document.getElementById('remark').value.trim();
+            const selectedItem = priceData.find(item => item.类别 === category && item.子类别 === subCategory && item.材质 === material);
+
+            if (selectedItem && space && label) {
+                let length = document.getElementById('length') ? parseFloat(document.getElementById('length').value) : 0;
+                let height = document.getElementById('height') ? parseFloat(document.getElementById('height').value) : 0;
+                let depth = document.getElementById('depth') ? parseFloat(document.getElementById('depth').value) : '-';
+                let quantity = document.getElementById('quantity') ? parseInt(document.getElementById('quantity').value) : 1;
+
+                if ((selectedItem.价格类型 === 'pricePerMeter' && length) ||
+                    (selectedItem.价格类型 === 'pricePerSquareMeter' && length && height) ||
+                    selectedItem.价格类型 === 'pricePerPiece') {
+
+                    const price = parseFloat(document.getElementById('calculatedUnitPrice').textContent);
+
+                    const newItem = {
+                        space: space,
+                        label: label,
+                        remark: remark,
+                        itemName: `${category}-${subCategory}-${material}`,
+                        unit: selectedItem.单位,
+                        length: length || '-',
+                        height: height || '-',
+                        depth: depth || '-',
+                        quantity: quantity,
+                        unitPrice: price / quantity,
+                        totalPrice: price,
+                        category: category // 新增类别属性
+                    };
+
+                    cartItems.push(newItem);
+
+                    // 更新之前的空间和标签列表
+                    if (!previousSpaces.includes(space)) {
+                        previousSpaces.push(space);
+                        updateSpaceList();
+                    }
+                    if (!previousLabels.includes(label)) {
+                        previousLabels.push(label);
+                        updateLabelList();
+                    }
+                    if (remark && !previousRemarks.includes(remark)) {
+                        previousRemarks.push(remark);
+                        updateRemarkList();
+                    }
+
+                    updateCart();
+                    clearInputFields();
+                } else {
+                    alert('请填写所有必要的信息');
+                }
+            } else {
+                alert('请选择商品并填写所属空间和标签');
+            }
+        }
+
+        // 清空输入字段
+        function clearInputFields() {
+            const inputs = document.querySelectorAll('#inputFields input');
+            inputs.forEach(input => {
+                if (input.id === 'quantity') {
+                    input.value = '1';
+                } else if (input.id === 'space' || input.id === 'label') {
+                    // 保留所属空间和标签的值
+                } else {
+                    input.value = '';
+                }
+            });
+            calculateUnitPrice();
+        }
+
+        // 更新购物车
+        function updateCart() {
+            const tbody = document.querySelector('#cartTable tbody');
+            tbody.innerHTML = '';
+            let total = 0;
+
+            // 按空间和标签排序
+            cartItems.sort((a, b) => {
+                let spaceCompare = a.space.localeCompare(b.space, 'zh-CN');
+                if (spaceCompare !== 0) return spaceCompare;
+                return a.label.localeCompare(b.label, 'zh-CN');
+            });
+
+            cartItems.forEach((item, index) => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = index + 1; // 序号
+                row.insertCell(1).textContent = item.space;
+                row.insertCell(2).textContent = item.label;
+                row.insertCell(3).textContent = item.itemName;
+                row.insertCell(4).textContent = item.unit;
+                row.insertCell(5).textContent = item.length;
+                row.insertCell(6).textContent = item.height;
+                row.insertCell(7).textContent = item.depth;
+                row.insertCell(8).textContent = item.quantity;
+                row.insertCell(9).textContent = item.unitPrice.toFixed(2);
+                row.insertCell(10).textContent = item.totalPrice.toFixed(2);
+                row.insertCell(11).textContent = item.remark || '';
+                const removeButton = document.createElement('button');
+                removeButton.textContent = '移除';
+                removeButton.onclick = () => removeFromCart(index);
+                row.insertCell(12).appendChild(removeButton);
+                total += item.totalPrice;
+            });
+
+            // 更新底部总价显示
+            document.getElementById('totalPriceFixedValue').textContent = total.toFixed(2);
+
+            // 计算各类别的数量
+            const categoryCounts = {};
+            cartItems.forEach(item => {
+                if (!categoryCounts[item.category]) {
+                    categoryCounts[item.category] = 0;
+                }
+                categoryCounts[item.category] += item.quantity;
+            });
+
+            // 更新类别统计显示
+            let categoryCountsText = '';
+            for (const [key, value] of Object.entries(categoryCounts)) {
+                categoryCountsText += `${key}: ${value}，`;
+            }
+            // 去除最后一个逗号
+            categoryCountsText = categoryCountsText.slice(0, -1);
+            document.getElementById('categoryCounts').textContent = categoryCountsText;
+        }
+
+        // 从购物车移除项目
+        function removeFromCart(index) {
+            cartItems.splice(index, 1);
+            updateCart();
+        }
+
+        // 保存方案到localStorage（修改后的函数）
+        function saveScheme() {
+            if (cartItems.length === 0) {
+                alert('购物车为空，无法保存方案。');
+                return;
+            }
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            if (!customerName || !customerPhone) {
+                alert('请填写客户姓名和电话。');
+                return;
+            }
+
+            // 从localStorage中获取方案数组和下一个方案索引
+            let schemes = JSON.parse(localStorage.getItem('schemes')) || [];
+            let nextSchemeIndex = parseInt(localStorage.getItem('nextSchemeIndex')) || 0;
+
+            // 准备方案数据
+            const schemeData = {
+                date: new Date().toLocaleString(),
+                timestamp: Date.now(),
+                customerName: customerName,
+                customerPhone: customerPhone,
+                cartItems: cartItems
+            };
+
+            // 在nextSchemeIndex位置保存方案
+            schemes[nextSchemeIndex] = schemeData;
+
+            // 如果方案数量超过10个，移除最老的方案
+            if (schemes.length > 10) {
+                schemes.shift();
+            }
+
+            // 更新nextSchemeIndex
+            nextSchemeIndex = (nextSchemeIndex + 1) % 10;
+
+            // 保存回localStorage
+            localStorage.setItem('schemes', JSON.stringify(schemes));
+            localStorage.setItem('nextSchemeIndex', nextSchemeIndex);
+
+            alert('方案已保存！');
+        }
+
+        // 加载方案（修改后的函数）
+        function loadScheme() {
+            // 从localStorage中获取方案数组
+            let schemes = JSON.parse(localStorage.getItem('schemes')) || [];
+
+            if (schemes.length === 0) {
+                alert('没有保存的方案。');
+                return;
+            }
+
+            // 根据时间戳降序排序方案，使最新的方案排在最前面
+            schemes.sort((a, b) => b.timestamp - a.timestamp);
+
+            // 显示方案列表
+            let schemeList = '已保存的方案列表：\n';
+            for (let i = 0; i < schemes.length; i++) {
+                const scheme = schemes[i];
+                const index = i + 1; // 序号从1开始
+                schemeList += `${index}. ${scheme.customerName} - ${scheme.date}\n`;
+            }
+
+            let schemeIndex = prompt(schemeList + '请输入要加载的方案序号：');
+
+            // 转换为整数并检查有效性
+            schemeIndex = parseInt(schemeIndex);
+
+            if (schemeIndex >= 1 && schemeIndex <= schemes.length) {
+                const schemeData = schemes[schemeIndex - 1];
+                cartItems = schemeData.cartItems;
+                updateCart();
+                document.getElementById('customerName').value = schemeData.customerName;
+                document.getElementById('customerPhone').value = schemeData.customerPhone;
+                alert(`方案 ${schemeIndex} 已加载！`);
+            } else {
+                alert('无效的方案序号。');
+            }
+        }
+
+        // 下载Excel报价单
+        function downloadExcel() {
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhone = document.getElementById('customerPhone').value.trim();
+            const customerAddress = document.getElementById('customerAddress').value.trim();
+            if (!customerName || !customerPhone || !customerAddress) {
+                alert('请填写完整的客户信息。');
+                return;
+            }
+
+            const dateTime = new Date().toLocaleString();
+
+            const data = [
+                ['宋檀家居全屋定制报价'],
+                [`日期时间：${dateTime}`],
+                [`客户姓名：${customerName}`],
+                [`客户电话：${customerPhone}`],
+                [`客户地址：${customerAddress}`],
+                [],
+                ['序号', '所属空间', '标签', '商品', '单位', '长度(mm)', '高度(mm)', '深度(mm)', '数量', '单价(元)', '总价(元)', '备注']
+            ];
+
+            cartItems.forEach((item, index) => {
+                data.push([
+                    index + 1,
+                    item.space,
+                    item.label,
+                    item.itemName,
+                    item.unit,
+                    item.length !== '-' ? Number(item.length) : '',
+                    item.height !== '-' ? Number(item.height) : '',
+                    item.depth !== '-' ? Number(item.depth) : '',
+                    item.quantity,
+                    item.unitPrice.toFixed(2),
+                    item.totalPrice.toFixed(2),
+                    item.remark || ''
+                ]);
+            });
+
+            // 添加总价行
+            const totalRowIndex = data.length + 1;
+            data.push(['', '', '', '', '', '', '', '', '', '总价', { t: 'n', f: `SUM(K8:K${totalRowIndex - 1})` }, '']);
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+
+            // 设置打印格式
+            ws['!pageSetup'] = {
+                orientation: "landscape", // 横向
+                paperSize: 9, // A4纸
+                fitToWidth: 1, // 宽度自适应
+                fitToHeight: 0 // 高度不限制
+            };
+
+            // 合并单元格设置
+            ws['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } }, // 标题合并
+                { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } },
+                { s: { r: 2, c: 0 }, e: { r: 2, c: 11 } },
+                { s: { r: 3, c: 0 }, e: { r: 3, c: 11 } },
+                { s: { r: 4, c: 0 }, e: { r: 4, c: 11 } },
+            ];
+
+            // 设置列宽
+            ws['!cols'] = [
+                { wch: 6 },   // 序号
+                { wch: 10 },  // 所属空间
+                { wch: 15 },  // 标签
+                { wch: 20 },  // 商品
+                { wch: 6 },   // 单位
+                { wch: 10 },  // 长度
+                { wch: 10 },  // 高度
+                { wch: 10 },  // 深度
+                { wch: 6 },   // 数量
+                { wch: 10 },  // 单价
+                { wch: 10 },  // 总价
+                { wch: 15 }   // 备注
+            ];
+
+            // 设置单元格样式
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (!ws[cell_address]) continue;
+                    ws[cell_address].s = {
+                        font: {
+                            name: '宋体',
+                            sz: R === 0 ? 20 : 11,
+                            bold: R <= 6 || R === totalRowIndex - 1
+                        },
+                        alignment: {
+                            horizontal: 'center',
+                            vertical: 'center',
+                            wrapText: true
+                        },
+                        border: {
+                            top: { style: 'thin', color: { rgb: "000000" } },
+                            right: { style: 'thin', color: { rgb: "000000" } },
+                            bottom: { style: 'thin', color: { rgb: "000000" } },
+                            left: { style: 'thin', color: { rgb: "000000" } }
+                        },
+                        fill: {
+                            fgColor: { rgb: "FFFFFF" }
+                        },
+                        numFmt: '0.00'
+                    };
+                }
+            }
+
+            // 将数字格式化
+            for (let R = 7; R <= data.length; ++R) {
+                for (let C = 5; C <= 10; ++C) {
+                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                    if (ws[cell_address]) {
+                        ws[cell_address].t = 'n';
+                    }
+                }
+            }
+
+            // 创建工作簿并导出
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "报价单");
+
+            // 设置打印区域
+            ws['!ref'] = `A1:L${data.length}`;
+
+            // 生成Excel文件并下载
+            XLSX.writeFile(wb, `${customerName}_${customerAddress}_报价单.xlsx`);
+        }
+
+        // 初始化页面
+        // updateCategories(); // 已经在登录成功后调用
+
+    </script>
+</body>
+</html>
